@@ -9,19 +9,14 @@
 
   const dark = "bg-red-100";
   const light = "bg-blue-100";
-
   // i 8 / 0 | i + 2 %
   const squareColor = (square: number) =>
     (square + ((square / 8) | 0)) % 2 ? dark : light;
 
-  let originalX = "";
-  let originalY = "";
-  let movingObject;
+  let movingObject: HTMLDivElement;
 
-  function handleTouchStart(e) {
+  function handleTouchStart(e: TouchEvent & { target: HTMLDivElement }) {
     movingObject = e.target;
-    originalX = e.target.offsetLeft - 10 + "px";
-    originalY = e.target.offsetTop - 10 + "px";
     activeEvent = "start";
   }
 
@@ -36,18 +31,51 @@
     activeEvent = "move";
   }
 
-  function handleTouchEnd(e) {
+  function handleTouchEnd(e: TouchEvent) {
     e.preventDefault();
 
     if (activeEvent === "move") {
-      const { pageX, pageY } = e.changedTouches[0];
+      const { pageX, pageY } = e.touches[0];
 
       endSquare = getSquare(pageX, pageY);
 
       if (endSquare !== null) {
-        squares[endSquare].children = e.target;
       }
     }
+  }
+
+  function handleMouseDown(e: MouseEvent & { target: HTMLDivElement }) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    movingObject = e.target;
+    activeEvent = "start";
+  }
+
+  function handleMouseMove(e: MouseEvent) {
+    e.stopPropagation();
+    e.preventDefault();
+    if (activeEvent === "start" || activeEvent === "move") {
+      let { pageX, pageY } = e;
+      movingObject.style.position = "absolute";
+      movingObject.style.left = `${pageX - movingObject.offsetWidth / 2}px`;
+      movingObject.style.top = `${pageY - movingObject.offsetHeight / 2}px`;
+      activeEvent = "move";
+    }
+  }
+
+  function handleMouseUp(e: MouseEvent & { target: HTMLDivElement }) {
+    e.preventDefault();
+    console.log("Mouse up");
+    if (activeEvent === "move") {
+      const { pageX, pageY } = e;
+
+      endSquare = getSquare(pageX, pageY);
+
+      if (endSquare !== null) {
+      }
+    }
+    activeEvent = "";
+    movingObject = null;
   }
 
   function getSquare(x, y) {
@@ -62,22 +90,26 @@
   }
 </script>
 
-<Piece
-  on:touchstart={handleTouchStart}
-  on:touchmove={handleTouchMove}
-  on:touchend={handleTouchEnd}
-/>
+<div on:mousemove={handleMouseMove}>
+  <Piece
+    on:touchstart={handleTouchStart}
+    on:touchmove={handleTouchMove}
+    on:touchend={handleTouchEnd}
+    on:mousedown={handleMouseDown}
+    on:mouseup={handleMouseUp}
+  />
 
-<grid class="board grid grid-cols-8" bind:this={grid}>
-  {#each board as square, i}
-    <grid-item
-      class="flex pb-full {squareColor(square)} w-full"
-      bind:this={squares[i]}>{square}</grid-item
-    >
-  {/each}
-</grid>
+  <grid class="board grid grid-cols-8" bind:this={grid}>
+    {#each board as square, i}
+      <grid-item
+        class="flex pb-full {squareColor(square)} w-full"
+        bind:this={squares[i]}>{square}</grid-item
+      >
+    {/each}
+  </grid>
 
-{endSquare}
+  {endSquare}
+</div>
 
 <style>
   grid-item::before {

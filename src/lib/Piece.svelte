@@ -1,7 +1,15 @@
 <script lang="ts">
 </script>
 
-<div draggable on:touchstart on:touchmove on:touchend />
+<div
+  draggable
+  on:touchstart
+  on:touchmove
+  on:touchend
+  on:mousedown
+  on:mousemove
+  on:mouseup
+/>
 
 <style>
   div {
