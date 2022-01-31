@@ -1,9 +1,10 @@
-<script lang="ts">
+<script lang="typescript">
   import Piece from "./Piece.svelte";
+  import { defaultBoard, PieceData } from "./helpers";
+  export let board: PieceData[] = defaultBoard;
 
-  export let board = Array.from(Array(64), (_, i) => i);
-  let grid;
-  let squares = [];
+  type MouchEvent = Event & Partial<TouchEvent & MouseEvent>;
+  let grid: HTMLElement;
   let activeEvent = "";
   let endSquare = 0;
 
@@ -14,71 +15,56 @@
     (square + ((square / 8) | 0)) % 2 ? dark : light;
 
   let movingObject: HTMLDivElement;
+  let OgSquare: number;
 
-  function handleTouchStart(e: TouchEvent & { target: HTMLDivElement }) {
-    movingObject = e.target;
+  function start(e: MouchEvent) {
+    e.preventDefault();
     activeEvent = "start";
+    const { pageX, pageY, touches } = e;
+    const x = pageX ?? touches[0].pageX;
+    const y = pageY ?? touches[0].pageY;
+
+    OgSquare = getSquare(x, y);
+    movingObject = e.target as HTMLDivElement;
   }
 
-  function handleTouchMove(e: TouchEvent & { target: HTMLDivElement }) {
+  function move(e: MouchEvent) {
+    e.preventDefault();
     e.stopPropagation();
-    e.preventDefault();
-    if (e.touches.length === 0) return;
-    let { pageX, pageY } = e.touches[0];
-    e.target.style.position = "absolute";
-    e.target.style.left = `${pageX - movingObject.offsetWidth / 2}px`;
-    e.target.style.top = `${pageY - movingObject.offsetHeight / 2}px`;
-    activeEvent = "move";
-  }
-
-  function handleTouchEnd(e: TouchEvent) {
-    e.preventDefault();
-
-    if (activeEvent === "move") {
-      const { pageX, pageY } = e.touches[0];
-
-      endSquare = getSquare(pageX, pageY);
-
-      if (endSquare !== null) {
-      }
-    }
-  }
-
-  function handleMouseDown(e: MouseEvent & { target: HTMLDivElement }) {
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    movingObject = e.target;
-    activeEvent = "start";
-  }
-
-  function handleMouseMove(e: MouseEvent) {
-    e.stopPropagation();
-    e.preventDefault();
-    if (activeEvent === "start" || activeEvent === "move") {
-      let { pageX, pageY } = e;
-      movingObject.style.position = "absolute";
-      movingObject.style.left = `${pageX - movingObject.offsetWidth / 2}px`;
-      movingObject.style.top = `${pageY - movingObject.offsetHeight / 2}px`;
+    const { pageX, pageY, touches } = e;
+    if (activeEvent === "move" || activeEvent === "start") {
       activeEvent = "move";
+      const x = pageX ?? touches[0].pageX;
+      const y = pageY ?? touches[0].pageY;
+      const squareLength = `${grid.offsetWidth / 8}px`;
+      movingObject.style.position = "absolute";
+      movingObject.style.height = squareLength;
+      movingObject.style.width = squareLength;
+      movingObject.style.left = `${x - movingObject.offsetWidth / 2}px`;
+      movingObject.style.top = `${y - movingObject.offsetHeight / 2}px`;
     }
   }
-
-  function handleMouseUp(e: MouseEvent & { target: HTMLDivElement }) {
-    e.preventDefault();
-    console.log("Mouse up");
+  function end(e: MouchEvent) {
+    const { pageX, pageY, changedTouches } = e;
+    const x = pageX ?? changedTouches[0].pageX;
+    const y = pageY ?? changedTouches[0].pageY;
     if (activeEvent === "move") {
-      const { pageX, pageY } = e;
-
-      endSquare = getSquare(pageX, pageY);
-
+      endSquare = getSquare(x, y);
       if (endSquare !== null) {
+        // Do something
+        movingObject.style.left = "0";
+        movingObject.style.top = "0";
+        movingObject.style.position = "relative";
+        const temp = board[OgSquare];
+        board[OgSquare] = null;
+        board[endSquare] = temp;
       }
+      activeEvent = "";
+      movingObject = null;
     }
-    activeEvent = "";
-    movingObject = null;
   }
 
-  function getSquare(x, y) {
+  function getSquare(x: number, y: number) {
     const { offsetLeft, offsetTop, offsetWidth, offsetHeight } = grid;
     const [relX, relY] = [x - offsetLeft, y - offsetTop];
     console.log({ relX, relY });
@@ -90,24 +76,23 @@
   }
 </script>
 
-<div on:mousemove={handleMouseMove}>
-  <Piece
-    on:touchstart={handleTouchStart}
-    on:touchmove={handleTouchMove}
-    on:touchend={handleTouchEnd}
-    on:mousedown={handleMouseDown}
-    on:mouseup={handleMouseUp}
-  />
-
+<div on:mousemove={move}>
   <grid class="board grid grid-cols-8" bind:this={grid}>
-    {#each board as square, i}
-      <grid-item
-        class="flex pb-full {squareColor(square)} w-full"
-        bind:this={squares[i]}>{square}</grid-item
+    {#each board as piece, i}
+      <grid-item class="flex pb-full {squareColor(i)} w-full"
+        >{#if piece}
+          <Piece
+            on:touchstart={start}
+            on:touchmove={move}
+            on:touchend={end}
+            on:mousedown={start}
+            on:mouseup={end}
+            {...piece}
+          />
+        {/if}</grid-item
       >
     {/each}
   </grid>
-
   {endSquare}
 </div>
 
