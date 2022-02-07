@@ -1,7 +1,8 @@
-<script lang="typescript">
+<script lang="ts">
   import Piece from "./Piece.svelte";
-  import { defaultBoard, PieceData } from "./helpers";
-  export let board: PieceData[] = defaultBoard;
+  import { isValidMove, applyMove } from "./state/game";
+  import { startingState, State } from "./state/model";
+  export let state: State = startingState;
 
   type MouchEvent = Event & Partial<TouchEvent & MouseEvent>;
   let grid: HTMLElement;
@@ -10,6 +11,7 @@
 
   const dark = "bg-red-100";
   const light = "bg-blue-100";
+
   // i 8 / 0 | i + 2 %
   const squareColor = (square: number) =>
     (square + ((square / 8) | 0)) % 2 ? dark : light;
@@ -19,49 +21,48 @@
 
   function start(e: MouchEvent) {
     e.preventDefault();
-    activeEvent = "start";
-    const { pageX, pageY, touches } = e;
-    const x = pageX ?? touches[0].pageX;
-    const y = pageY ?? touches[0].pageY;
-
+    activeEvent = "move";
+    const { x, y } = getXY(e);
+    const squareLength = `${grid.offsetWidth / 8}px`;
     OgSquare = getSquare(x, y);
     movingObject = e.target as HTMLDivElement;
+    movingObject.style.position = "absolute";
+    movingObject.style.height = squareLength;
+    movingObject.style.width = squareLength;
   }
 
   function move(e: MouchEvent) {
     e.preventDefault();
     e.stopPropagation();
-    const { pageX, pageY, touches } = e;
-    if (activeEvent === "move" || activeEvent === "start") {
-      activeEvent = "move";
-      const x = pageX ?? touches[0].pageX;
-      const y = pageY ?? touches[0].pageY;
-      const squareLength = `${grid.offsetWidth / 8}px`;
-      movingObject.style.position = "absolute";
-      movingObject.style.height = squareLength;
-      movingObject.style.width = squareLength;
+    if (activeEvent === "move") {
+      const { x, y } = getXY(e);
       movingObject.style.left = `${x - movingObject.offsetWidth / 2}px`;
       movingObject.style.top = `${y - movingObject.offsetHeight / 2}px`;
     }
   }
   function end(e: MouchEvent) {
-    const { pageX, pageY, changedTouches } = e;
-    const x = pageX ?? changedTouches[0].pageX;
-    const y = pageY ?? changedTouches[0].pageY;
+    const { x, y } = getXY(e);
     if (activeEvent === "move") {
+      movingObject.style.left = "0";
+      movingObject.style.top = "0";
+      movingObject.style.position = "relative";
       endSquare = getSquare(x, y);
-      if (endSquare !== null) {
-        // Do something
-        movingObject.style.left = "0";
-        movingObject.style.top = "0";
-        movingObject.style.position = "relative";
-        const temp = board[OgSquare];
-        board[OgSquare] = null;
-        board[endSquare] = temp;
+      if (
+        endSquare !== null &&
+        isValidMove(state, { from: OgSquare, to: endSquare })
+      ) {
+        state = applyMove(state, { from: OgSquare, to: endSquare });
       }
       activeEvent = "";
       movingObject = null;
     }
+  }
+
+  function getXY(e: MouchEvent): { x: number; y: number } {
+    const { pageX, pageY, touches, changedTouches } = e;
+    const x = pageX ?? touches[0]?.pageX ?? changedTouches[0].pageX;
+    const y = pageY ?? touches[0]?.pageY ?? changedTouches[0].pageY;
+    return { x, y };
   }
 
   function getSquare(x: number, y: number) {
@@ -77,8 +78,8 @@
 </script>
 
 <div on:mousemove={move}>
-  <grid class="board grid grid-cols-8" bind:this={grid}>
-    {#each board as piece, i}
+  <grid class="state grid grid-cols-8" bind:this={grid}>
+    {#each state.board as { piece }, i}
       <grid-item class="flex pb-full {squareColor(i)} w-full"
         >{#if piece}
           <Piece

@@ -1,11 +1,15 @@
 <script lang="ts">
-  export let type = "bb";
+  import { PieceType, Player } from "./state/model";
+
+  export let type: PieceType = PieceType.BISHOP;
+  export let owner: Player = Player.BLACK;
   export let l = "100%";
 </script>
 
 <div
-  class="bg-[url('/src/assets/img/{type}.svg')] "
-  style="background: url('/src/assets/img/{type}.svg'); height: {l}; width: {l}; background-size: cover;"
+  class="bg-cover "
+  style="background: url('/src/assets/img/{owner[0] +
+    type}.svg') 0% 0% / cover; height: {l}; width: {l};"
   on:touchstart
   on:touchmove
   on:touchend
@@ -18,8 +22,5 @@
   div {
     display: block;
     flex-shrink: 0;
-  }
-
-  div::before {
   }
 </style>
