@@ -7,7 +7,7 @@
 </script>
 
 <div
-  class="bg-cover "
+  class="bg-cover"
   style="background: url('/src/assets/img/{owner[0] +
     type}.svg') 0% 0% / cover; height: {l}; width: {l};"
   on:touchstart

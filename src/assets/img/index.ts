@@ -19,7 +19,22 @@ import Sword from "./sword.svg";
 import Flail from "./flail.svg";
 import Clear from "./blank.svg";
 
-export const pieceImages = { bb, bk, bn, bp, bq, br, bz, wb, wk, wn, wp, wq, wr, wz}
+export const pieceImages = {
+  bb,
+  bk,
+  bn,
+  bp,
+  bq,
+  br,
+  bz,
+  wb,
+  wk,
+  wn,
+  wp,
+  wq,
+  wr,
+  wz,
+};
 export const powerUpImages = { Guard, Shield, Sword, Flail, Clear };
 
 export type PieceImageKey = keyof typeof pieceImages;
