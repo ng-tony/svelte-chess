@@ -77,10 +77,10 @@
   }
 </script>
 
-<div on:mousemove={move}>
-  <grid class="state grid grid-cols-8" bind:this={grid}>
+<div on:mousemove={move} class="max-w-[100vh]">
+  <grid class="grid grid-cols-8 h-1px" bind:this={grid}>
     {#each state.board as { piece }, i}
-      <grid-item class="flex pb-full {squareColor(i)} w-full"
+      <grid-item class="flex {squareColor(i)}"
         >{#if piece}
           <Piece
             on:touchstart={start}
@@ -94,7 +94,6 @@
       >
     {/each}
   </grid>
-  {endSquare}
 </div>
 
 <style>

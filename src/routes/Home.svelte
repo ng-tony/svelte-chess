@@ -4,5 +4,4 @@
 
 <div class="flex flex-col h-screen">
   <Board />
-  <p>Inside Home</p>
 </div>
